@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bintaro Loop 200K — Training Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --bg2: #171b24;
+    --bg3: #1e2330;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8eaf0;
+    --text2: #8b92a8;
+    --text3: #555e78;
+    --run: #378ADD;
+    --long: #1D9E75;
+    --night: #7F77DD;
+    --strength: #BA7517;
+    --rest: #444c63;
+    --race: #D85A30;
+    --done: #1D9E75;
+    --skip: #993C1D;
+    --partial: #BA7517;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    display: flex; align-items: center; gap: 1.5rem;
+    height: 52px;
+  }
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 13px; font-weight: 500;
+    color: var(--text); letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .nav-logo span { color: var(--run); }
+  .nav-tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    font-size: 12px; padding: 5px 12px;
+    border-radius: 6px; border: none;
+    background: transparent; color: var(--text2);
+    cursor: pointer; white-space: nowrap;
+    transition: all .15s;
+  }
+  .nav-tab:hover { background: var(--bg3); color: var(--text); }
+  .nav-tab.active { background: var(--bg3); color: var(--text); font-weight: 500; }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .progress-pill {
+    font-family: var(--mono); font-size: 11px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 10px;
+    color: var(--long); white-space: nowrap;
+  }
+  .reset-btn {
+    font-size: 11px; padding: 4px 10px;
+    border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text3);
+    cursor: pointer;
+  }
+  .reset-btn:hover { color: var(--skip); border-color: var(--skip); }
+
+  /* ── VIEWS ── */
+  .view { display: none; padding: 1.5rem; max-width: 960px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 2.5rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--run); letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .hero-title {
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 600; line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .hero-title .km { color: var(--run); }
+  .hero-sub {
+    font-size: 15px; color: var(--text2);
+    max-width: 560px; line-height: 1.6;
+  }
+  .stat-row {
+    display: flex; flex-wrap: wrap; gap: 1rem;
+    margin-top: 2rem;
+  }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 18px;
+    min-width: 110px;
+  }
+  .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .stat-val { font-family: var(--mono); font-size: 22px; color: var(--text); }
+  .stat-unit { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* ── RACE ZONES ── */
+  .zone-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 2rem; }
+  .zone-card {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .zone-card.critical { border-color: rgba(216,90,48,0.4); background: rgba(216,90,48,0.05); }
+  .zone-card.night { border-color: rgba(127,119,221,0.4); background: rgba(127,119,221,0.05); }
+  .zone-tag { font-family: var(--mono); font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+  .zone-tag.critical { background: rgba(216,90,48,0.15); color: #D85A30; }
+  .zone-tag.night { background: rgba(127,119,221,0.15); color: #7F77DD; }
+  .zone-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .zone-desc { font-size: 12px; color: var(--text2); }
+
+  /* ── SECTION ── */
+  .section-title {
+    font-size: 11px; font-weight: 500;
+    color: var(--text3); text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 1rem;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+
+  /* ── PHASE TABS ── */
+  .phase-tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .phase-tab {
+    font-size: 12px; padding: 6px 14px;
+    border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--text2);
+    cursor: pointer; transition: all .15s;
+  }
+  .phase-tab:hover { border-color: var(--run); color: var(--text); }
+  .phase-tab.active { background: var(--run); border-color: var(--run); color: #fff; font-weight: 500; }
+  .phase-tab.f2.active { background: var(--long); border-color: var(--long); }
+  .phase-tab.f3.active { background: var(--race); border-color: var(--race); }
+
+  /* ── WEEK GRID ── */
+  .week-list { display: flex; flex-direction: column; gap: 8px; }
+  .week-block { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .week-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .week-header:hover { background: var(--bg3); }
+  .week-num { font-family: var(--mono); font-size: 11px; color: var(--text3); min-width: 24px; }
+  .week-label { font-size: 13px; font-weight: 500; flex: 1; }
+  .week-km { font-family: var(--mono); font-size: 12px; color: var(--run); }
+  .week-check { font-size: 13px; }
+  .week-arrow { font-size: 12px; color: var(--text3); transition: transform .2s; }
+  .week-block.open .week-arrow { transform: rotate(90deg); }
+  .week-body { display: none; }
+  .week-block.open .week-body { display: block; }
+
+  /* ── DAY ROW ── */
+  .day-row {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    gap: 0;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+    transition: background .1s;
+  }
+  .day-row:last-child { border-bottom: none; }
+  .day-row:hover { background: rgba(255,255,255,0.02); }
+  .day-row.done { opacity: 0.5; }
+  .day-row.done .day-title { text-decoration: line-through; }
+
+  .day-left { display: flex; flex-direction: column; gap: 4px; }
+  .day-name { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .day-badge {
+    font-size: 10px; font-weight: 500;
+    padding: 2px 7px; border-radius: 4px;
+    display: inline-block; width: fit-content;
+  }
+  .badge-run { background: rgba(55,138,221,0.15); color: var(--run); }
+  .badge-long { background: rgba(29,158,117,0.15); color: var(--long); }
+  .badge-night { background: rgba(127,119,221,0.15); color: var(--night); }
+  .badge-strength { background: rgba(186,117,23,0.15); color: var(--strength); }
+  .badge-rest { background: rgba(68,76,99,0.2); color: var(--text3); }
+  .badge-race { background: rgba(216,90,48,0.15); color: var(--race); }
+
+  .day-center { padding: 0 12px; }
+  .day-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .day-detail { font-size: 11px; color: var(--text2); line-height: 1.5; }
+  .day-dist { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  .day-right { display: flex; align-items: center; gap: 8px; padding-top: 2px; }
+  .check-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all .15s; flex-shrink: 0;
+  }
+  .check-btn:hover { border-color: var(--done); background: rgba(29,158,117,0.1); }
+  .check-btn.done { background: var(--done); border-color: var(--done); }
+  .check-btn.skip { background: var(--skip); border-color: var(--skip); }
+
+  /* ── WEEK PROGRESS BAR ── */
+  .week-progress-row { padding: 10px 16px; background: var(--bg3); display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); }
+  .week-prog-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .week-prog-fill { height: 100%; background: var(--long); border-radius: 2px; transition: width .3s; }
+  .week-prog-text { font-family: var(--mono); font-size: 10px; color: var(--text3); white-space: nowrap; }
+
+  /* ── LOG VIEW ── */
+  .log-grid { display: grid; gap: 10px; }
+  .log-week {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    display: grid; grid-template-columns: 80px 1fr auto;
+    gap: 12px; align-items: center;
+  }
+  .log-week-num { font-family: var(--mono); font-size: 12px; color: var(--text3); }
+  .log-week-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .log-week-fill { height: 100%; border-radius: 3px; }
+  .log-week-km { font-family: var(--mono); font-size: 13px; color: var(--run); }
+
+  /* ── STRENGTH ── */
+  .strength-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .exercise-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .ex-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .ex-target { font-family: var(--mono); font-size: 11px; color: var(--strength); margin-bottom: 8px; }
+  .ex-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-family: var(--mono); font-size: 12px; }
+  .ex-input:focus { outline: none; border-color: var(--strength); }
+  .ex-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+
+  /* ── NUTRITION ── */
+  .nutrition-section { margin-bottom: 2rem; }
+  .nut-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .nut-label { font-size: 12px; font-weight: 500; min-width: 160px; color: var(--text2); }
+  .nut-val { font-size: 12px; color: var(--text); flex: 1; }
+  .nut-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-family: var(--sans); font-size: 12px; }
+  .nut-input:focus { outline: none; border-color: var(--run); }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    background: var(--run); color: #fff; border: none;
+    padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: opacity .15s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+
+  /* ── GLOBAL PROGRESS ── */
+  .global-prog {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    margin-bottom: 2rem;
+  }
+  .global-prog-title { font-size: 12px; color: var(--text3); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .global-prog-bar { height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+  .global-prog-fill { height: 100%; background: linear-gradient(90deg, var(--run), var(--long)); border-radius: 4px; transition: width .5s; }
+  .global-prog-stats { display: flex; gap: 1.5rem; }
+  .gp-stat { font-family: var(--mono); font-size: 12px; }
+  .gp-stat span { color: var(--text3); font-size: 11px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .day-row { grid-template-columns: 70px 1fr auto; }
+    .stat-row { gap: 8px; }
+    .stat-card { min-width: 90px; padding: 10px 12px; }
+    .hero-title { font-size: 28px; }
+    nav { padding: 0 1rem; }
+    .view { padding: 1rem; }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+  .deload-badge { font-size: 10px; color: var(--strength); font-family: var(--mono); margin-left: 6px; }
+  .weekend-glow { border-left: 2px solid var(--long); }
+  .race-week-glow { border-left: 2px solid var(--race); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">BL<span>200</span>K</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchView('overview')">Overview</button>
+    <button class="nav-tab" onclick="switchView('jadwal')">Jadwal</button>
+    <button class="nav-tab" onclick="switchView('strength')">Strength</button>
+    <button class="nav-tab" onclick="switchView('nutrition')">Nutrition & Gear</button>
+    <button class="nav-tab" onclick="switchView('log')">Log</button>
+  </div>
+  <div class="nav-right">
+    <span id="syncStatus" style="font-family:var(--mono);font-size:10px;color:#378ADD;opacity:0.4;transition:opacity .4s;white-space:nowrap;"></span>
+    <div class="progress-pill" id="globalPill">0 / 252 sesi</div>
+    <button class="reset-btn" onclick="showSetup()" title="Setup cloud sync">⚙</button>
+    <button class="reset-btn" onclick="confirmReset()">Reset</button>
+  </div>
+</nav>
+
+<!-- ────────────────── OVERVIEW ────────────────── -->
+<div class="view active" id="view-overview">
+  <div class="hero">
+    <div class="hero-eyebrow">Program 9 Bulan · Gus Sur · 63.8 kg · Jakarta</div>
+    <h1 class="hero-title">Bintaro Loop<br><span class="km">200 km</span></h1>
+    <p class="hero-sub">Start race: Jumat 20.00 · Cutoff: 40 jam (Minggu 12.00) · 2 malam · 16 loop × 12.5 km · pace minimum 10:42/km moving</p>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Durasi program</div><div class="stat-val">36</div><div class="stat-unit">minggu latihan</div></div>
+      <div class="stat-card"><div class="stat-label">Peak volume</div><div class="stat-val">70</div><div class="stat-unit">km/minggu lari</div></div>
+      <div class="stat-card"><div class="stat-label">Back-to-back peak</div><div class="stat-val">30+20</div><div class="stat-unit">km (Sab+Min)</div></div>
+      <div class="stat-card"><div class="stat-label">Strength</div><div class="stat-val">2×</div><div class="stat-unit">per minggu</div></div>
+      <div class="stat-card"><div class="stat-label">Dog walk bonus</div><div class="stat-val">10–12</div><div class="stat-unit">km/hari</div></div>
+    </div>
+  </div>
+
+  <div class="global-prog">
+    <div class="global-prog-title">Progress keseluruhan</div>
+    <div class="global-prog-bar"><div class="global-prog-fill" id="globalBar" style="width:0%"></div></div>
+    <div class="global-prog-stats">
+      <div class="gp-stat"><span>Selesai: </span><span id="gpDone">0</span></div>
+      <div class="gp-stat"><span>Skip: </span><span id="gpSkip">0</span></div>
+      <div class="gp-stat"><span>Sisa: </span><span id="gpLeft">252</span></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-bottom:1rem;">Zona kritis race — yang paling harus disiapkan</div>
+  <div class="zone-grid">
+    <div class="zone-card">
+      <span class="zone-tag" style="background:rgba(55,138,221,0.15);color:var(--run)">Loop 1–4 · 0–50 km</span>
+      <div class="zone-title">Godaan terlalu cepat</div>
+      <div class="zone-desc">Semua orang start kencang. Kamu harus tahan. Pace 10:42/km itu lambat — dan itu rencana.</div>
+    </div>
+    <div class="zone-card night">
+      <span class="zone-tag night">Loop 8–10 · 96–120 km</span>
+      <div class="zone-title">Malam pertama · Jaga ritme</div>
+      <div class="zone-desc">Lelah mulai terasa. Perut pertama kali protes. Night run Kamis melatih ini.</div>
+    </div>
+    <div class="zone-card critical">
+      <span class="zone-tag critical">Loop 12–14 · 144–168 km</span>
+      <div class="zone-title">Jam 02–05 malam ke-2 ⚠️</div>
+      <div class="zone-desc">Zona paling berat seluruh race. Tidur deprivation + kaki rusak. Race sim malam melatih ini.</div>
+    </div>
+    <div class="zone-card">
+      <span class="zone-tag" style="background:rgba(29,158,117,0.15);color:var(--long)">Loop 15–16 · 180–196 km</span>
+      <div class="zone-title">Finish push · Mental game</div>
+      <div class="zone-desc">Tubuh bisa, kepala yang menyerah. Back-to-back Minggu melatih "kaki rusak tapi terus jalan".</div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-bottom:1rem;">Milestone perjalanan 9 bulan</div>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <div id="milestones-list"></div>
+  </div>
+</div>
+
+<!-- ────────────────── JADWAL ────────────────── -->
+<div class="view" id="view-jadwal">
+  <div style="margin-bottom:1.5rem;">
+    <div class="section-title">Pilih fase</div>
+    <div class="phase-tabs">
+      <button class="phase-tab f1 active" onclick="switchPhase(1, this)">Fase 1 — Base (Bln 1–3)</button>
+      <button class="phase-tab f2" onclick="switchPhase(2, this)">Fase 2 — Build (Bln 4–6)</button>
+      <button class="phase-tab f3" onclick="switchPhase(3, this)">Fase 3 — Peak (Bln 7–9)</button>
+    </div>
+  </div>
+  <div class="week-list" id="weekList"></div>
+</div>
+
+<!-- ────────────────── STRENGTH ────────────────── -->
+<div class="view" id="view-strength">
+  <div style="margin-bottom:1.5rem;">
+    <div class="section-title">Strength A — Lower Body (Senin)</div>
+    <div class="strength-grid">
+      <div class="exercise-card">
+        <div class="ex-name">Goblet Squat</div>
+        <div class="ex-target">3 × 12 reps</div>
+        <div class="ex-label">Beban minggu ini (kg)</div>
+        <input class="ex-input" type="text" placeholder="cth: 12 kg" id="str_goblet" oninput="saveStr()">
+      </div>
+      <div class="exercise-card">
+        <div class="ex-name">Single-leg RDL</div>
+        <div class="ex-target">3 × 10 reps per kaki</div>
+        <div class="ex-label">Beban minggu ini (kg)</div>
+        <input class="ex-input" type="text" placeholder="cth: 8 kg" id="str_rdl" oninput="saveStr()">
+      </div>
+      <div class="exercise-card">
+        <div class="ex-name">Calf Raise</div>
+        <div class="ex-target">3 × 15 reps</div>
+        <div class="ex-label">Variasi / catatan</div>
+        <input class="ex-input" type="text" placeholder="cth: single-leg, BW" id="str_calf" oninput="saveStr()">
+      </div>
+      <div class="exercise-card">
+        <div class="ex-name">Plank</div>
+        <div class="ex-target">2 × 30 detik</div>
+        <div class="ex-label">Durasi aktual (detik)</div>
+        <input class="ex-input" type="text" placeholder="cth: 45 detik" id="str_plank" oninput="saveStr()">
+      </div>
+    </div>
+    <div class="section-title">Strength B — Core & Glute (Rabu)</div>
+    <div class="strength-grid">
+      <div class="exercise-card">
+        <div class="ex-name">Hip Thrust</div>
+        <div class="ex-target">3 × 12 reps</div>
+        <div class="ex-label">Beban minggu ini (kg)</div>
+        <input class="ex-input" type="text" placeholder="cth: 20 kg" id="str_hipthrust" oninput="saveStr()">
+      </div>
+      <div class="exercise-card">
+        <div class="ex-name">Step-Up</div>
+        <div class="ex-target">3 × 10 reps per kaki</div>
+        <div class="ex-label">Tinggi box / beban</div>
+        <input class="ex-input" type="text" placeholder="cth: 40cm box, BW" id="str_stepup" oninput="saveStr()">
+      </div>
+      <div class="exercise-card">
+        <div class="ex-name">Lateral Band Walk</div>
+        <div class="ex-target">3 × 15 langkah</div>
+        <div class="ex-label">Level band</div>
+        <input class="ex-input" type="text" placeholder="cth: medium band" id="str_band" oninput="saveStr()">
+      </div>
+      <div class="exercise-card">
+        <div class="ex-name">Dead Bug</div>
+        <div class="ex-target">2 × 20 reps</div>
+        <div class="ex-label">Catatan form</div>
+        <input class="ex-input" type="text" placeholder="cth: slow & controlled" id="str_deadbug" oninput="saveStr()">
+      </div>
+    </div>
+    <div style="padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-top:1rem;">
+      <div style="font-size:12px;color:var(--text2);line-height:1.7;">
+        <strong style="color:var(--text);">Tips strength untuk ultra runner:</strong><br>
+        · Fokus pada <strong>single-leg movement</strong> — ini yang paling relevan untuk loop ke-12+<br>
+        · Jangan sampai DOMS (nyeri) parah — jaga beban progresif 5–10% per 2 minggu<br>
+        · Selesaikan dalam 30–35 menit di slot istirahat trading jam 12.00<br>
+        · Kalau jadwal bentrok, strength bisa dipindah ke malam setelah dog walk sore<br>
+        · Di COROS: tekan tombol tengah → Gym → Strength → mulai. Atau buat workout template di app COROS dulu.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ────────────────── NUTRITION & GEAR ────────────────── -->
+<div class="view" id="view-nutrition">
+  <div class="nutrition-section">
+    <div class="section-title">Nutrition Plan — Race Day 200K</div>
+    <div class="nut-row">
+      <div class="nut-label">Kalori target/jam</div>
+      <div class="nut-val">~300–350 kkal/jam saat gerak. Total race: ±12.000–15.000 kkal.</div>
+    </div>
+    <div class="nut-row">
+      <div class="nut-label">Frekuensi makan</div>
+      <div class="nut-val">Tiap 40–45 menit saat bergerak. Jangan tunggu lapar — telat selalu.</div>
+    </div>
+    <div class="nut-row">
+      <div class="nut-label">Gel yang dicoba</div>
+      <input class="nut-input" type="text" id="nut_gel" placeholder="Isi hasil test long run..." oninput="saveNut()">
+    </div>
+    <div class="nut-row">
+      <div class="nut-label">Real food pilihan</div>
+      <input class="nut-input" type="text" id="nut_realfood" placeholder="Pisang · nasi abon · roti · kurma..." oninput="saveNut()">
+    </div>
+    <div class="nut-row">
+      <div class="nut-label">Masalah perut?</div>
+      <input class="nut-input" type="text" id="nut_stomach" placeholder="Catat tiap setelah long run..." oninput="saveNut()">
+    </div>
+    <div class="nut-row">
+      <div class="nut-label">Minuman favorit</div>
+      <input class="nut-input" type="text" id="nut_drink" placeholder="Hindari terlalu manis..." oninput="saveNut()">
+    </div>
+    <div class="nut-row">
+      <div class="nut-label">Elektrolit / salt</div>
+      <input class="nut-input" type="text" id="nut_salt" placeholder="Salt tab, pocari, dll..." oninput="saveNut()">
+    </div>
+    <div class="nut-row">
+      <div class="nut-label">Catatan lain</div>
+      <input class="nut-input" type="text" id="nut_notes" placeholder="..." oninput="saveNut()">
+    </div>
+  </div>
+
+  <div class="nutrition-section">
+    <div class="section-title">Gear Checklist — Race Day</div>
+    <div id="gearList"></div>
+  </div>
+
+  <div class="nutrition-section">
+    <div class="section-title">Catatan tiap long run</div>
+    <div id="longrunNotes"></div>
+    <button class="btn-primary" onclick="addLongrunNote()" style="margin-top:10px;">+ Tambah catatan long run</button>
+  </div>
+</div>
+
+<!-- ────────────────── LOG ────────────────── -->
+<div class="view" id="view-log">
+  <div class="section-title" style="margin-bottom:1rem;">Weekly volume log — isi setelah tiap minggu selesai</div>
+  <div class="log-grid" id="logGrid"></div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const SA = "Strength A: 3×12 Goblet Squat · 3×10 Single-leg RDL · 3×15 Calf Raise · 2×30s Plank";
+const SB = "Strength B: 3×12 Hip Thrust · 3×10 Step-Up · 3×15 Lateral Band Walk · 2×20 Dead Bug";
+
+function buildTraining() {
+  const weeks = [];
+  const days = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
+
+  for (let wk = 1; wk <= 36; wk++) {
+    let phase = wk <= 12 ? 1 : wk <= 24 ? 2 : 3;
+    let rel = wk <= 12 ? wk : wk <= 24 ? wk-12 : wk-24;
+    let isDeload = rel % 4 === 0;
+    let isTaper = phase === 3 && rel >= 10;
+    let isRaceSim = phase === 3 && !isDeload && !isTaper && rel % 3 === 2;
+
+    let label = `Minggu ${wk}`;
+    if (isDeload) label += " — Deload";
+    if (isTaper) label += " — Taper";
+    if (isRaceSim) label += " — Race Sim 🌙";
+
+    const schedule = [];
+
+    if (phase === 1) {
+      const longKm = isDeload ? Math.min(5 + wk, 12) : Math.min(6 + wk, 15);
+      const runKm = isDeload ? 4 : Math.min(5 + Math.floor(wk/2), 10);
+      schedule.push(
+        { day:"Senin", type:"strength", badge:"badge-strength", title:"Strength A", detail:SA, dist:"– (30 mnt)" },
+        { day:"Selasa", type:"run", badge:"badge-run", title:"Easy Run Malam", detail:"Zone 2 · HR 120–140 · Pace bebas asal HR < 145", dist:`${runKm} km` },
+        { day:"Rabu", type:"strength", badge:"badge-strength", title:"Strength B", detail:SB, dist:"– (30 mnt)" },
+        { day:"Kamis", type:"run", badge:"badge-run", title:"Easy Run Malam", detail:"Zone 2 · HR 120–140 · Konsisten pace", dist:`${runKm+1} km` },
+        { day:"Jumat", type:"rest", badge:"badge-rest", title:"Recovery", detail:"Foam roll + stretching 15 menit · Simpan energi untuk weekend", dist:"–" },
+        { day:"Sabtu", type:"long", badge:"badge-long", title:"Long Run", detail:`Zone 2 · HR < 145 · Start 05.00 · Bawa air${isDeload ? ' · Deload ringan' : ''}`, dist:`${longKm} km`, weekend:true },
+        { day:"Minggu", type:"rest", badge:"badge-rest", title:"Rest", detail:"Istirahat total / renang opsional 400m", dist:"–", weekend:true }
+      );
+    } else if (phase === 2) {
+      const longKm = isDeload ? 12 : Math.min(14 + rel, 25);
+      const btbKm = isDeload ? 8 : Math.min(7 + rel, 16);
+      const nightKm = isDeload ? 8 : Math.min(10 + rel, 15);
+      schedule.push(
+        { day:"Senin", type:"rest", badge:"badge-rest", title:"Rest Wajib", detail:"Recovery setelah back-to-back weekend. Foam roll saja.", dist:"–" },
+        { day:"Selasa", type:"strength", badge:"badge-strength", title:"Strength A + Easy Run", detail:`${SA} · Lalu easy run malam`, dist:`${Math.min(8+Math.floor(rel/2),12)} km` },
+        { day:"Rabu", type:"strength", badge:"badge-strength", title:"Strength B", detail:SB, dist:"– (30 mnt)" },
+        { day:"Kamis", type:"night", badge:"badge-night", title:"Night Run", detail:`Zone 2 malam · Bawa gel · Test headlamp · HR 130–145`, dist:`${nightKm} km` },
+        { day:"Jumat", type:"rest", badge:"badge-rest", title:"Recovery + Prep", detail:"Foam roll · Tidur siang · Siapkan gear weekend · Karbohidrat lebih banyak", dist:"–" },
+        { day:"Sabtu", type:"long", badge:"badge-long", title:"Long Run", detail:`Start 04.30 gelap · Bawa nutrition lengkap · HR < 150${isDeload?' · Deload':''}`, dist:`${longKm} km`, weekend:true },
+        { day:"Minggu", type:"long", badge:"badge-long", title:"Back-to-Back Run ⚡", detail:"KAKI LELAH — tetap gerak · Pace lebih lambat = lebih bagus · Zone 1–2", dist:`${btbKm} km`, weekend:true }
+      );
+    } else {
+      const longKm = isTaper ? 15 : isDeload ? 18 : Math.min(25 + rel, 32);
+      const btbKm = isTaper ? 5 : isDeload ? 10 : Math.min(15 + rel, 22);
+      const nightKm = isTaper ? 8 : Math.min(15 + rel, 20);
+      schedule.push(
+        { day:"Senin", type:"rest", badge:"badge-rest", title:"Rest Total", detail:"Senin selalu rest di fase ini. Recovery wajib setelah weekend berat.", dist:"–" },
+        { day:"Selasa", type:"strength", badge:"badge-strength", title:"Strength A + Easy Run", detail:`${SA} · Single-leg dominan · Lalu easy run`, dist:`${Math.min(10+Math.floor(rel/2),14)} km` },
+        { day:"Rabu", type:"strength", badge:"badge-strength", title:"Strength B", detail:SB, dist:"– (30 mnt)" },
+        { day:"Kamis", type:"night", badge:"badge-night", title:isTaper?"Easy Run Malam":"Night Tempo Run", detail:isTaper?"Zone 2 santai · Kaki segar":"4km warm-up → target pace → 2km cool-down · Vest + gel wajib", dist:`${nightKm} km` },
+        { day:"Jumat", type:"rest", badge:"badge-rest", title:isTaper?"Rest + Final Prep":"Recovery + Carbo Load", detail:isTaper?"Cek semua gear · Nutrition plan race · Tidur awal":"Makan karbohidrat lebih · Siapkan gear · Tidur jam 21.00", dist:"–" },
+        { day:"Sabtu", type: isRaceSim?"race":"long", badge:isRaceSim?"badge-race":"badge-long",
+          title:isTaper?"Taper Long Run":isRaceSim?"Race Simulation 🌙 Start 20.00":"Long Run PEAK",
+          detail:isTaper?"Zone 2 · Pendek · HR < 145 · Kaki segar":isRaceSim?"Start jam 20.00 malam · Full race gear · Test nutrition & gear · Lari 4–5 jam":"Start 04.00 gelap · Bawa nutrition penuh · Target < 5 jam",
+          dist:isTaper?"15 km":isRaceSim?"25–30 km":`${longKm} km`, weekend:true },
+        { day:"Minggu", type:isTaper?"run":"long", badge:isTaper?"badge-run":"badge-long",
+          title:isTaper?"Easy Shakeout":"Back-to-Back 20K+ ⚡",
+          detail:isTaper?"30 menit saja · Zone 1 · Kaki segar":"KAKI RUSAK — tetap jalan · Simulator loop 12–16 · Jalan pun OK · Zone 1",
+          dist:isTaper?"5 km":`${btbKm} km`, weekend:true }
+      );
+    }
+
+    weeks.push({ wk, phase, label, schedule, isDeload, isTaper, isRaceSim });
+  }
+
+  // Race week
+  weeks.push({
+    wk: 37, phase: 0, label: "Race Week — BINTARO LOOP 200K 🏁", isDeload:false, isTaper:false, isRaceSim:false,
+    schedule: [
+      { day:"Senin", type:"rest", badge:"badge-rest", title:"Rest Total", detail:"Tidak ada latihan. Makan, tidur, cek gear.", dist:"–" },
+      { day:"Selasa", type:"run", badge:"badge-run", title:"Easy Jog", detail:"15 menit santai saja. Kaki segar.", dist:"2 km" },
+      { day:"Rabu", type:"rest", badge:"badge-rest", title:"Rest", detail:"Tidur banyak. Finalisasi nutrition plan.", dist:"–" },
+      { day:"Kamis", type:"run", badge:"badge-run", title:"Shakeout Run", detail:"10–15 menit. Jangan berlebihan.", dist:"2 km" },
+      { day:"Jumat", type:"race", badge:"badge-race", title:"🏁 START RACE 20.00 !", detail:"Karbohidrat besar · Tidur siang · Berangkat ke venue · BINTARO LOOP 200K", dist:"200 km", weekend:true },
+    ]
+  });
+
+  return weeks;
+}
+
+const TRAINING = buildTraining();
+const TOTAL_SESSIONS = TRAINING.reduce((s,w) => s + w.schedule.length, 0);
+
+// ─── CLOUD STORAGE — JSONBin.io ─────────────────────────────────────────────
+// Setup: daftar di jsonbin.io → buat Bin → copy BIN_ID dan X-Master-Key
+// Lalu isi dua variabel di bawah ini
+// These are set dynamically from localStorage
+let JSONBIN_ID  = localStorage.getItem('bl200_bin_id')  || '';
+let JSONBIN_KEY = localStorage.getItem('bl200_bin_key') || '';
+
+let _db = {
+  checks: {}, strength: {}, nutrition: {},
+  gear: {}, longruns: [], weeklog: {}
+};
+let _saveTimer = null;
+let _dirty = false;
+
+function syncStatus(msg, color='#378ADD') {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.textContent = msg; el.style.color = color; el.style.opacity = '1';
+  clearTimeout(el._t);
+  if (msg !== '↑ saving...') el._t = setTimeout(()=>el.style.opacity='0.4', 3000);
+}
+
+async function cloudLoad() {
+  if (!JSONBIN_ID || !JSONBIN_KEY) {
+    // Fallback ke localStorage
+    try { const d = JSON.parse(localStorage.getItem('bl200_db')||'{}'); if (d.checks) Object.assign(_db, d); } catch(e){}
+    syncStatus('⚠ offline mode', '#BA7517'); return;
+  }
+  syncStatus('↓ loading...');
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const j = await r.json();
+    if (j.record) Object.assign(_db, j.record);
+    syncStatus('✓ loaded', '#1D9E75');
+  } catch(e) {
+    syncStatus('⚠ load failed', '#D85A30');
+    try { const d = JSON.parse(localStorage.getItem('bl200_db')||'{}'); if (d.checks) Object.assign(_db, d); } catch(e2){}
+  }
+}
+
+async function cloudSave() {
+  // Always save to localStorage as backup
+  localStorage.setItem('bl200_db', JSON.stringify(_db));
+  if (!JSONBIN_ID || !JSONBIN_KEY) return;
+  syncStatus('↑ saving...');
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
+      method: 'PUT',
+      headers: { 'Content-Type':'application/json', 'X-Master-Key': JSONBIN_KEY },
+      body: JSON.stringify(_db)
+    });
+    syncStatus('✓ saved', '#1D9E75');
+  } catch(e) { syncStatus('⚠ saved locally', '#BA7517'); }
+}
+
+function scheduleSave() {
+  _dirty = true;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(cloudSave, 1500);
+}
+
+function getChecks() { return _db.checks || {}; }
+function saveChecks(d) { _db.checks = d; scheduleSave(); }
+function getLog()    { return _db.weeklog || {}; }
+function saveLog(d)  { _db.weeklog = d; scheduleSave(); }
+function getStrDb()  { return _db.strength || {}; }
+function getNutDb()  { return _db.nutrition || {}; }
+function getGearDb() { return _db.gear || {}; }
+function getLRDb()   { return Array.isArray(_db.longruns) ? _db.longruns : []; }
+
+// ─── VIEWS ──────────────────────────────────────────────────────────────────
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'jadwal') renderJadwal(currentPhase);
+  if (name === 'log') renderLog();
+}
+
+// ─── JADWAL ─────────────────────────────────────────────────────────────────
+let currentPhase = 1;
+
+function switchPhase(p, btn) {
+  currentPhase = p;
+  document.querySelectorAll('.phase-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderJadwal(p);
+}
+
+function renderJadwal(phase) {
+  const container = document.getElementById('weekList');
+  container.innerHTML = '';
+  const checks = getChecks();
+  const weeksToShow = phase === 0 ? TRAINING.filter(w => w.wk === 37) : TRAINING.filter(w => w.phase === phase);
+
+  weeksToShow.forEach(week => {
+    const weekDone = week.schedule.filter(s => checks[`${week.wk}_${s.day}`] === 'done').length;
+    const weekSkip = week.schedule.filter(s => checks[`${week.wk}_${s.day}`] === 'skip').length;
+    const pct = Math.round(((weekDone+weekSkip) / week.schedule.length) * 100);
+    const allDone = weekDone === week.schedule.length;
+
+    const block = document.createElement('div');
+    block.className = `week-block${week.wk === 37 ? ' race-week-glow' : ''}`;
+    block.id = `week-${week.wk}`;
+
+    const emoji = allDone ? '✅' : weekDone > 0 ? '🔄' : '○';
+
+    block.innerHTML = `
+      <div class="week-header" onclick="toggleWeek(${week.wk})">
+        <div class="week-num">W${week.wk}</div>
+        <div class="week-label">${week.label}</div>
+        <div class="week-km">${week.phase===0?'race':'Fase '+week.phase}</div>
+        <div class="week-check">${emoji}</div>
+        <div class="week-arrow">›</div>
+      </div>
+      <div class="week-body" id="wbody-${week.wk}">
+        ${week.schedule.map(s => renderDayRow(week.wk, s, checks)).join('')}
+        <div class="week-progress-row">
+          <div class="week-prog-bar"><div class="week-prog-fill" id="wprog-${week.wk}" style="width:${pct}%"></div></div>
+          <div class="week-prog-text">${weekDone}/${week.schedule.length} selesai</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(block);
+  });
+}
+
+function renderDayRow(wk, s, checks) {
+  const key = `${wk}_${s.day}`;
+  const state = checks[key] || '';
+  const isDone = state === 'done';
+  const isSkip = state === 'skip';
+  const weekend = s.weekend ? 'weekend-glow' : '';
+  return `
+    <div class="day-row ${isDone?'done':''} ${weekend}" id="row-${wk}-${s.day.replace(/'/g,'')}">
+      <div class="day-left">
+        <div class="day-name">${s.day}</div>
+        <span class="day-badge ${s.badge}">${s.type==='strength'?'Strength':s.type==='long'?'Long Run':s.type==='night'?'Night Run':s.type==='run'?'Easy Run':s.type==='race'?'Race':s.type==='rest'?'Rest':''}</span>
+      </div>
+      <div class="day-center">
+        <div class="day-title">${s.title}</div>
+        <div class="day-detail">${s.detail}</div>
+        <div class="day-dist">${s.dist}</div>
+      </div>
+      <div class="day-right">
+        <button class="check-btn ${isDone?'done':isSkip?'skip':''}" onclick="toggleCheck(${wk},'${s.day.replace(/'/g,'')}',this)" title="${isDone?'Selesai':isSkip?'Skip':'Tandai selesai'}">
+          ${isDone?'✓':isSkip?'✗':''}
+        </button>
+      </div>
+    </div>`;
+}
+
+function toggleWeek(wk) {
+  const block = document.getElementById(`week-${wk}`);
+  block.classList.toggle('open');
+}
+
+function toggleCheck(wk, day, btn) {
+  const checks = getChecks();
+  const key = `${wk}_${day}`;
+  const cur = checks[key] || '';
+  // cycle: '' → done → skip → ''
+  const next = cur === '' ? 'done' : cur === 'done' ? 'skip' : '';
+  if (next === '') { delete checks[key]; } else { checks[key] = next; }
+  saveChecks(checks);
+
+  btn.className = `check-btn ${next}`;
+  btn.textContent = next === 'done' ? '✓' : next === 'skip' ? '✗' : '';
+
+  const row = btn.closest('.day-row');
+  row.className = `day-row ${next==='done'?'done':''} ${row.classList.contains('weekend-glow')?'weekend-glow':''}`;
+
+  // Update week progress
+  updateWeekProg(wk, checks);
+  updateGlobal(checks);
+}
+
+function updateWeekProg(wk, checks) {
+  const week = TRAINING.find(w => w.wk === wk);
+  if (!week) return;
+  const done = week.schedule.filter(s => checks[`${wk}_${s.day}`] === 'done').length;
+  const skip = week.schedule.filter(s => checks[`${wk}_${s.day}`] === 'skip').length;
+  const pct = Math.round(((done+skip)/week.schedule.length)*100);
+  const fill = document.getElementById(`wprog-${wk}`);
+  if (fill) fill.style.width = pct + '%';
+  const text = fill?.closest('.week-progress-row')?.querySelector('.week-prog-text');
+  if (text) text.textContent = `${done}/${week.schedule.length} selesai`;
+
+  // Update week emoji
+  const block = document.getElementById(`week-${wk}`);
+  if (block) {
+    const emoji = block.querySelector('.week-check');
+    if (emoji) emoji.textContent = done===week.schedule.length?'✅':done>0?'🔄':'○';
+  }
+}
+
+function updateGlobal(checks) {
+  const done = Object.values(checks).filter(v=>v==='done').length;
+  const skip = Object.values(checks).filter(v=>v==='skip').length;
+  const left = TOTAL_SESSIONS - done - skip;
+  const pct = Math.round((done+skip)/TOTAL_SESSIONS*100);
+
+  document.getElementById('globalPill').textContent = `${done} / ${TOTAL_SESSIONS} sesi`;
+  const bar = document.getElementById('globalBar');
+  if (bar) { bar.style.width = pct+'%'; }
+  const gpDone = document.getElementById('gpDone');
+  const gpSkip = document.getElementById('gpSkip');
+  const gpLeft = document.getElementById('gpLeft');
+  if (gpDone) gpDone.textContent = done;
+  if (gpSkip) gpSkip.textContent = skip;
+  if (gpLeft) gpLeft.textContent = left;
+}
+
+// ─── STRENGTH ───────────────────────────────────────────────────────────────
+function saveStr() {
+  const d = getStrDb();
+  ['goblet','rdl','calf','plank','hipthrust','stepup','band','deadbug'].forEach(k => {
+    const el = document.getElementById('str_'+k);
+    if (el) d[k] = el.value;
+  });
+  _db.strength = d; scheduleSave();
+}
+function loadStr() {
+  const d = getStrDb();
+  Object.entries(d).forEach(([k,v]) => {
+    const el = document.getElementById('str_'+k);
+    if (el) el.value = v;
+  });
+}
+
+// ─── NUTRITION ──────────────────────────────────────────────────────────────
+function saveNut() {
+  const d = getNutDb();
+  ['gel','realfood','stomach','drink','salt','notes'].forEach(k => {
+    const el = document.getElementById('nut_'+k);
+    if (el) d[k] = el.value;
+  });
+  _db.nutrition = d; scheduleSave();
+}
+function loadNut() {
+  const d = getNutDb();
+  Object.entries(d).forEach(([k,v]) => {
+    const el = document.getElementById('nut_'+k);
+    if (el) el.value = v;
+  });
+}
+
+// ─── GEAR ───────────────────────────────────────────────────────────────────
+const GEAR_ITEMS = [
+  "Sepatu 1 (0–100 km) — pilih yang paling nyaman",
+  "Sepatu 2 (100–200 km) — ganti di posko tengah",
+  "Kaos kaki cadangan (min. 2 pasang)",
+  "Headlamp utama — test baterai sebelum race",
+  "Headlamp cadangan — wajib ada",
+  "Vest / hydration belt — test di long run malam",
+  "Jaket / baju malam — malam ke-2 lebih dingin",
+  "Anti-blister (Bodyglide / vaseline)",
+  "Obat-obatan: Paracetamol · Antimo · Koyo",
+  "Power bank — charge GPS sepanjang malam",
+  "Gel / nutrition untuk 40 jam",
+  "Botol air 500ml × 2",
+  "Ganti baju (minimal 1 set)",
+  "Senter cadangan (bukan headlamp)",
+];
+
+function renderGear() {
+  const el = document.getElementById('gearList');
+  if (!el) return;
+  let gear = getGearDb();
+  el.innerHTML = GEAR_ITEMS.map((item, i) => `
+    <div class="nut-row" style="cursor:pointer" onclick="toggleGear(${i})">
+      <div style="font-size:18px;margin-right:4px;min-width:28px;">${gear[i]?'✅':'⬜'}</div>
+      <div class="nut-val" style="${gear[i]?'text-decoration:line-through;opacity:0.5':''}">${item}</div>
+    </div>
+  `).join('');
+}
+
+function toggleGear(i) {
+  let gear = getGearDb();
+  gear[i] = !gear[i];
+  _db.gear = gear; scheduleSave();
+  renderGear();
+}
+
+// ─── LONG RUN NOTES ─────────────────────────────────────────────────────────
+function renderLongrunNotes() {
+  const el = document.getElementById('longrunNotes');
+  if (!el) return;
+  let notes = getLRDb();
+  if (notes.length === 0) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:12px 0;">Belum ada catatan. Tambahkan setelah long run pertama.</div>`;
+    return;
+  }
+  el.innerHTML = notes.map((n, i) => `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <input style="background:transparent;border:none;color:var(--run);font-family:var(--mono);font-size:12px;width:140px;" value="${n.date||''}" placeholder="Tanggal / km" oninput="updateLRNote(${i},'date',this.value)">
+        <button onclick="deleteLRNote(${i})" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:12px;">× hapus</button>
+      </div>
+      <input class="nut-input" style="margin-bottom:6px;" placeholder="Apa yang berjalan baik..." value="${n.good||''}" oninput="updateLRNote(${i},'good',this.value)">
+      <input class="nut-input" placeholder="Apa yang harus diperbaiki..." value="${n.improve||''}" oninput="updateLRNote(${i},'improve',this.value)">
+    </div>
+  `).join('');
+}
+
+function addLongrunNote() {
+  let notes = getLRDb();
+  notes.push({ date:'', good:'', improve:'' });
+  _db.longruns = notes; scheduleSave();
+  renderLongrunNotes();
+}
+
+function updateLRNote(i, field, val) {
+  const notes = getLRDb();
+  if (notes[i]) notes[i][field] = val;
+  _db.longruns = notes; scheduleSave();
+}
+
+function deleteLRNote(i) {
+  const notes = getLRDb();
+  notes.splice(i, 1);
+  _db.longruns = notes; scheduleSave();
+  renderLongrunNotes();
+}
+
+// ─── WEEKLY LOG ─────────────────────────────────────────────────────────────
+function renderLog() {
+  const el = document.getElementById('logGrid');
+  if (!el) return;
+  const log = getLog();
+  const phases = ['','Fase 1','Fase 1','Fase 1','Fase 1','Fase 1','Fase 1','Fase 1','Fase 1','Fase 1','Fase 1','Fase 1','Fase 1','Fase 2','Fase 2','Fase 2','Fase 2','Fase 2','Fase 2','Fase 2','Fase 2','Fase 2','Fase 2','Fase 2','Fase 2','Fase 3','Fase 3','Fase 3','Fase 3','Fase 3','Fase 3','Fase 3','Fase 3','Fase 3','Fase 3','Fase 3','Fase 3'];
+  const colors = ['','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#1D9E75','#1D9E75','#1D9E75','#1D9E75','#1D9E75','#1D9E75','#1D9E75','#1D9E75','#1D9E75','#1D9E75','#1D9E75','#1D9E75','#D85A30','#D85A30','#D85A30','#D85A30','#D85A30','#D85A30','#D85A30','#D85A30','#D85A30','#D85A30','#D85A30','#D85A30'];
+  const targets = [0,25,26,27,28,22,23,24,25,22,23,24,20,35,38,42,38,40,45,50,45,48,52,50,42,55,58,62,55,58,65,70,65,68,70,50,20];
+
+  el.innerHTML = Array.from({length:36},(_,i)=>i+1).map(wk => {
+    const d = log[wk] || {};
+    const runKm = parseFloat(d.run||0);
+    const targetKm = targets[wk]||0;
+    const pct = targetKm > 0 ? Math.min(100, Math.round(runKm/targetKm*100)) : 0;
+    const color = colors[wk]||'#378ADD';
+    return `
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text3);min-width:60px;">Minggu ${wk}</div>
+          <div style="font-size:11px;color:${color};min-width:48px;">${phases[wk]}</div>
+          <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .3s;"></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:11px;color:${color};min-width:60px;text-align:right;">${runKm||'–'} / ${targetKm} km</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;">
+          <div><div style="font-size:9px;color:var(--text3);margin-bottom:2px;">Run aktual (km)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:12px;" type="number" value="${d.run||''}" placeholder="${targetKm} km" oninput="saveLogField(${wk},'run',this.value)"></div>
+          <div><div style="font-size:9px;color:var(--text3);margin-bottom:2px;">Long run (km)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:12px;" type="number" value="${d.longrun||''}" placeholder="–" oninput="saveLogField(${wk},'longrun',this.value)"></div>
+          <div><div style="font-size:9px;color:var(--text3);margin-bottom:2px;">Avg HR easy run</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:12px;" type="number" value="${d.hr||''}" placeholder="–" oninput="saveLogField(${wk},'hr',this.value)"></div>
+          <div><div style="font-size:9px;color:var(--text3);margin-bottom:2px;">Perasaan / catatan</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:5px 8px;color:var(--text);font-family:var(--sans);font-size:11px;" type="text" value="${d.notes||''}" placeholder="..." oninput="saveLogField(${wk},'notes',this.value)"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function saveLogField(wk, field, val) {
+  const log = getLog();
+  if (!log[wk]) log[wk] = {};
+  log[wk][field] = val;
+  saveLog(log);
+}
+
+// ─── MILESTONES ─────────────────────────────────────────────────────────────
+function renderMilestones() {
+  const el = document.getElementById('milestones-list');
+  if (!el) return;
+  const data = [
+    {w:"Bulan 1", ph:"Fase 1", t:"Mulai habit: strength 2×/minggu + night run Selasa & Kamis", color:"#378ADD"},
+    {w:"Bulan 2", ph:"Fase 1", t:"Long run tembus 15 km pertama kali", color:"#378ADD"},
+    {w:"Bulan 3", ph:"Fase 1", t:"Back-to-back pertama: 14K Sabtu + 8K Minggu", color:"#378ADD"},
+    {w:"Bulan 4–5", ph:"Fase 2", t:"Back-to-back 20K + 10K. Test gel & headlamp", color:"#1D9E75"},
+    {w:"Bulan 5", ph:"Fase 2", t:"Race test: ikut event 50K atau simulasi sendiri", color:"#1D9E75"},
+    {w:"Bulan 6", ph:"Fase 2", t:"Back-to-back 22K + 15K. Evaluasi gear lengkap", color:"#1D9E75"},
+    {w:"Bulan 7", ph:"Fase 3", t:"Fase peak. Long run 25 km+", color:"#D85A30"},
+    {w:"Bulan 8", ph:"Fase 3", t:"Back-to-back 30K + 20K pertama. Night race simulation", color:"#D85A30"},
+    {w:"Bulan 9", ph:"Fase 3", t:"Taper: volume turun 40%, jaga sharpness", color:"#D85A30"},
+    {w:"Race day", ph:"Minggu 37", t:"BINTARO LOOP 200K — Start Jumat 20.00 🏁", color:"#BA7517"},
+  ];
+  el.innerHTML = data.map((m,i) => `
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="width:6px;height:6px;border-radius:50%;background:${m.color};margin-top:5px;flex-shrink:0;"></div>
+      <div style="font-family:var(--mono);font-size:11px;color:${m.color};min-width:70px;">${m.w}</div>
+      <div style="font-size:12px;color:var(--text2);min-width:50px;">${m.ph}</div>
+      <div style="font-size:13px;color:var(--text);">${m.t}</div>
+    </div>
+  `).join('');
+}
+
+// ─── RESET ──────────────────────────────────────────────────────────────────
+function confirmReset() {
+  if (confirm('Reset semua checklist? Data log, nutrition, dan strength tetap aman.')) {
+    _db.checks = {};
+    scheduleSave();
+    updateGlobal({});
+    renderJadwal(currentPhase);
+  }
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+async function init() {
+  await cloudLoad();
+  const checks = getChecks();
+  updateGlobal(checks);
+  renderMilestones();
+  loadStr();
+  loadNut();
+  renderGear();
+  renderLongrunNotes();
+}
+
+init();
+</script>
+
+<!-- Setup Modal -->
+<div id="setupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:#1e2330;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;max-width:440px;width:90%;margin:auto;">
+    <div style="font-size:16px;font-weight:600;margin-bottom:6px;">Setup Cloud Sync</div>
+    <div style="font-size:12px;color:#8b92a8;margin-bottom:20px;line-height:1.6;">
+      Data tersimpan di <strong style="color:#e8eaf0;">JSONBin.io</strong> — gratis, sinkron semua device.<br>
+      Langkah: <a href="https://jsonbin.io" target="_blank" style="color:#378ADD;">daftar di jsonbin.io</a> → New Bin (isi JSON: <code style="font-size:11px;">{}</code>) → copy Bin ID dan Master Key.
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;color:#555e78;margin-bottom:4px;">Bin ID</div>
+      <input id="input_bin_id" type="text" placeholder="64a3f..." style="width:100%;background:#0f1117;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 12px;color:#e8eaf0;font-family:monospace;font-size:13px;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;color:#555e78;margin-bottom:4px;">X-Master-Key</div>
+      <input id="input_bin_key" type="password" placeholder="$2a$10$..." style="width:100%;background:#0f1117;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 12px;color:#e8eaf0;font-family:monospace;font-size:13px;">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeSetup()" style="background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 16px;color:#8b92a8;cursor:pointer;font-size:13px;">Batal</button>
+      <button onclick="saveSetup()" style="background:#378ADD;border:none;border-radius:8px;padding:8px 16px;color:#fff;cursor:pointer;font-size:13px;font-weight:500;">Simpan & Sync</button>
+    </div>
+    <div id="setupMsg" style="margin-top:12px;font-size:12px;text-align:center;color:#8b92a8;"></div>
+  </div>
+</div>
+
+<script>
+function showSetup() {
+  document.getElementById('input_bin_id').value = localStorage.getItem('bl200_bin_id')||'';
+  document.getElementById('input_bin_key').value = localStorage.getItem('bl200_bin_key')||'';
+  document.getElementById('setupModal').style.display = 'flex';
+}
+function closeSetup() {
+  document.getElementById('setupModal').style.display = 'none';
+}
+async function saveSetup() {
+  const id = document.getElementById('input_bin_id').value.trim();
+  const key = document.getElementById('input_bin_key').value.trim();
+  if (!id || !key) { document.getElementById('setupMsg').textContent = 'Isi kedua field dulu.'; return; }
+  localStorage.setItem('bl200_bin_id', id);
+  localStorage.setItem('bl200_bin_key', key);
+  document.getElementById('setupMsg').textContent = 'Testing koneksi...';
+  // Update globals
+  window.JSONBIN_ID_VAL = id;
+  window.JSONBIN_KEY_VAL = key;
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${id}/latest`, {
+      headers: { 'X-Master-Key': key }
+    });
+    const j = await r.json();
+    if (j.record !== undefined) {
+      Object.assign(_db, j.record);
+      document.getElementById('setupMsg').style.color = '#1D9E75';
+      document.getElementById('setupMsg').textContent = '✓ Berhasil! Data loaded dari cloud.';
+      updateGlobal(getChecks());
+      loadStr(); loadNut(); renderGear(); renderLongrunNotes();
+      if (document.getElementById('view-jadwal').classList.contains('active')) renderJadwal(currentPhase);
+      if (document.getElementById('view-log').classList.contains('active')) renderLog();
+      setTimeout(closeSetup, 1500);
+    } else {
+      document.getElementById('setupMsg').style.color = '#D85A30';
+      document.getElementById('setupMsg').textContent = 'Gagal: ' + JSON.stringify(j).slice(0,80);
+    }
+  } catch(e) {
+    document.getElementById('setupMsg').style.color = '#D85A30';
+    document.getElementById('setupMsg').textContent = 'Error: ' + e.message;
+  }
+}
+</script>
+
+</body>
+</html>
